@@ -56,7 +56,15 @@ export interface BlogPostFields {
   slug: string;
   excerpt?: string;
   description?: string;
-  body: any; // Rich Text document
+  body?: any; // Rich Text document
+  content?: any; // Rich Text document (Contentful field name)
+  coverImage?: {
+    sys: {
+      type: string;
+      linkType: string;
+      id: string;
+    };
+  };
   featuredImage?: {
     fields: {
       file: {
@@ -98,7 +106,15 @@ function parseBlogPost(entry: Entry<EntrySkeletonType>): BlogPost {
   let featuredImage: string | undefined;
   let featuredImageAlt: string | undefined;
 
-  if (fields.featuredImage && typeof fields.featuredImage === "object") {
+  // Try to get featured image from either coverImage or featuredImage
+  if (fields.coverImage && typeof fields.coverImage === "object") {
+    const imgLink = (fields.coverImage as any)?.sys?.id;
+    if (imgLink) {
+      // Note: In a real implementation, you'd resolve the asset link
+      // For now, we'll handle it in the includes section
+      featuredImageAlt = fields.title;
+    }
+  } else if (fields.featuredImage && typeof fields.featuredImage === "object") {
     const imgFields = (fields.featuredImage as any)?.fields;
     if (imgFields?.file?.url) {
       featuredImage = `https:${imgFields.file.url}`;
@@ -106,12 +122,15 @@ function parseBlogPost(entry: Entry<EntrySkeletonType>): BlogPost {
     }
   }
 
+  // Use content field if body is not available
+  const bodyContent = fields.body || fields.content || null;
+
   return {
     id: entry.sys.id,
     title: fields.title || "Sin título",
     slug: fields.slug || entry.sys.id,
     excerpt: fields.excerpt || fields.description || "",
-    body: fields.body || null,
+    body: bodyContent,
     featuredImage,
     featuredImageAlt,
     author: fields.author || "Juan Pablo Franco",
