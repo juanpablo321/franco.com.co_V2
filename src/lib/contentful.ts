@@ -147,15 +147,22 @@ function parseBlogPost(entry: Entry<EntrySkeletonType>): BlogPost {
 export async function getAllBlogPosts(preview = false): Promise<BlogPost[]> {
   try {
     const client = getClient(preview);
-    if (!client) return [];
+    if (!client) {
+      console.warn("Contentful client not initialized. Returning empty posts.");
+      return [];
+    }
 
+    console.log("Fetching blog posts from Contentful...");
     const entries = await client.getEntries({
       content_type: "blogPost",
       order: ["-fields.publishDate"],
       limit: 100,
     });
 
-    return entries.items.map(parseBlogPost);
+    console.log(`Found ${entries.items.length} blog posts`);
+    const posts = entries.items.map(parseBlogPost);
+    console.log("Parsed posts:", posts.map(p => ({ title: p.title, slug: p.slug })));
+    return posts;
   } catch (error) {
     console.error("Error fetching blog posts from Contentful:", error);
     return [];
