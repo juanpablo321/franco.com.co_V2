@@ -29,8 +29,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["Playfair Display", "Georgia", "serif"],
-        body: ["Source Sans 3", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Playfair Display", "Georgia", "serif"],
+        body: ["var(--font-body)", "Source Sans 3", "system-ui", "sans-serif"],
       },
       transitionDuration: {
         "400": "400ms",

@@ -1,19 +1,52 @@
-import { createClient, type EntrySkeletonType, type Entry } from "contentful";
+import { createClient, type EntrySkeletonType, type Entry, type ContentfulClientApi } from "contentful";
 
-// Server-side only — these env vars are NOT prefixed with NEXT_PUBLIC_
-const client = createClient({
-  space: process.env.CONTENTFUL_SPACE_ID!,
-  accessToken: process.env.CONTENTFUL_ACCESS_TOKEN!,
-});
+// ─── Lazy Client Initialization ──────────────────────────────────
+// Clients are created lazily to avoid crashing during build when
+// environment variables are not yet available (e.g., first Vercel deploy).
 
-const previewClient = createClient({
-  space: process.env.CONTENTFUL_SPACE_ID!,
-  accessToken: process.env.CONTENTFUL_PREVIEW_TOKEN!,
-  host: "preview.contentful.com",
-});
+let _client: ContentfulClientApi<undefined> | null = null;
+let _previewClient: ContentfulClientApi<undefined> | null = null;
 
-export function getClient(preview = false) {
-  return preview ? previewClient : client;
+function getDeliveryClient(): ContentfulClientApi<undefined> | null {
+  if (_client) return _client;
+
+  const spaceId = process.env.CONTENTFUL_SPACE_ID;
+  const accessToken = process.env.CONTENTFUL_ACCESS_TOKEN;
+
+  if (!spaceId || !accessToken) {
+    console.warn(
+      "Contentful credentials not found. Blog features will be unavailable.",
+    );
+    return null;
+  }
+
+  _client = createClient({ space: spaceId, accessToken });
+  return _client;
+}
+
+function getPreviewClient(): ContentfulClientApi<undefined> | null {
+  if (_previewClient) return _previewClient;
+
+  const spaceId = process.env.CONTENTFUL_SPACE_ID;
+  const previewToken = process.env.CONTENTFUL_PREVIEW_TOKEN;
+
+  if (!spaceId || !previewToken) {
+    console.warn(
+      "Contentful preview credentials not found.",
+    );
+    return null;
+  }
+
+  _previewClient = createClient({
+    space: spaceId,
+    accessToken: previewToken,
+    host: "preview.contentful.com",
+  });
+  return _previewClient;
+}
+
+function getClient(preview = false) {
+  return preview ? getPreviewClient() : getDeliveryClient();
 }
 
 // ─── Blog Post Types ───────────────────────────────────────────────
@@ -94,7 +127,10 @@ function parseBlogPost(entry: Entry<EntrySkeletonType>): BlogPost {
 
 export async function getAllBlogPosts(preview = false): Promise<BlogPost[]> {
   try {
-    const entries = await getClient(preview).getEntries({
+    const client = getClient(preview);
+    if (!client) return [];
+
+    const entries = await client.getEntries({
       content_type: "blogPost",
       order: ["-fields.publishDate"],
       limit: 100,
@@ -112,7 +148,10 @@ export async function getBlogPostBySlug(
   preview = false,
 ): Promise<BlogPost | null> {
   try {
-    const entries = await getClient(preview).getEntries({
+    const client = getClient(preview);
+    if (!client) return null;
+
+    const entries = await client.getEntries({
       content_type: "blogPost",
       "fields.slug": slug,
       limit: 1,
@@ -129,7 +168,10 @@ export async function getBlogPostBySlug(
 
 export async function getAllBlogSlugs(): Promise<string[]> {
   try {
-    const entries = await getClient().getEntries({
+    const client = getClient();
+    if (!client) return [];
+
+    const entries = await client.getEntries({
       content_type: "blogPost",
       select: ["fields.slug"],
       limit: 1000,
