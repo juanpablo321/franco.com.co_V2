@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-cream-50 text-charcoal-900 font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl leading-tight;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl;
+  }
+
+  ::selection {
+    @apply bg-purple-deep/20 text-purple-deep;
+  }
+}
+
+@layer components {
+  .section-number {
+    @apply font-display text-sm tracking-widest text-gold-muted/50;
+  }
+
+  .editorial-label {
+    @apply font-body text-xs font-semibold tracking-[0.25em] uppercase text-gold-muted;
+  }
+
+  .gold-line {
+    @apply w-12 h-0.5 bg-gold-muted;
+  }
+
+  .container-editorial {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1280px;
+  }
+}
